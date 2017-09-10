@@ -1,4 +1,5 @@
-﻿using PdfSharp.Pdf;
+﻿using PdfSharp.Drawing;
+using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
 using System;
 using System.Collections.Generic;
@@ -27,11 +28,32 @@ namespace PDFMerger
                 {
                     PdfDocument outPdf = new PdfDocument();
 
+                    PdfPage frontPage = new PdfPage();
+                    outPdf.AddPage(frontPage);
+
+                    int totalPageCount = 2;
+                    int verticalOffset = 0;
+
                     foreach (var file in fileNames)
                     {
                         using (PdfDocument existingPdf = PdfReader.Open($@"{path}\{file}", PdfDocumentOpenMode.Import))
                         {
                             CopyPages(existingPdf, outPdf);
+
+                            XFont fontNormal = new XFont("Calibri", 20, XFontStyle.Regular);
+                            XGraphics gfx = XGraphics.FromPdfPage(frontPage);
+                            var xrect = new XRect(240, 395 + verticalOffset, 300, 25);
+                            var rect = gfx.Transformer.WorldToDefaultPage(xrect);
+                            var pdfrect = new PdfRectangle(rect);
+                            verticalOffset += 30;
+
+                            //file link
+                            frontPage.AddDocumentLink(pdfrect, totalPageCount);
+                            totalPageCount += existingPdf.Pages.Count;
+
+                            gfx.DrawString(file.Split('.')[0], fontNormal, XBrushes.Black, xrect, XStringFormats.TopLeft);
+
+                            gfx.Dispose();
                         }
                     }
 
